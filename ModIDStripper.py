@@ -8,6 +8,42 @@ Input: User entered filename
 Return: Printout of param IDs
 
 """
+#imports
+import sys
+
+def checkFile(fileLoc):
+    """
+        Function to open a modfile and check for the text 
+            <!--Created by Arma 3 Launcher: https://arma3.com-->
+            which denotes the file is a modlist and not a different
+            kind of file
+        Parameters: html file name[str]
+        Return: confirm file is a modlist [bool]
+    """
+    
+    #define array to pull first three lines to check file
+    some_lines = []
+    
+    #define text to search for
+    key_text = "<!--Created by Arma 3 Launcher: https://arma3.com-->"
+    
+    #catch exceptions and return false
+    try:
+        #open file and create new reader
+        with open(fileLoc,'r') as file:
+            #read three lines
+            for x in [0,1,2]:
+                some_lines.append(file.readline())
+
+            #***DEBUG    print(some_lines)
+
+        #look for key_text in line 3 to prove it is a modlist
+        if key_text in some_lines[2]:
+            return True
+        else:
+            return False
+    except:
+        return False
 
 def getModIDs(fileLoc):
     """
@@ -61,15 +97,37 @@ def formatModIDs(all_mods):
     #return completed string
     return formatted_mods
 
-print()
-#get modlist file name
-modlist = input('Please enter exact name of modlist including the .html: ')
+#define loop exit variable
+isModlist = False
+
+#hold user in file selection until a good file is chosen
+while(True):
+    print()
+    #get modlist file name
+    modlist = input('Please enter exact name of modlist including the .html: ')
+
+    #check file to ensure it is a modlist
+    isModlist = checkFile(modlist)
+    #***DEBUG print(isModlist)
+    
+    #exit loop if file is good
+    if isModlist:
+        break
+
+    #check if exit is typed
+    if modlist.lower() == "exit":
+        #if so, quit program
+        sys.exit(0)
+    
+    #if we get here, inform the user the files was not good
+    print("File name incorrect. Please check spelling and ensure you put the .html!")
+    print("Type 'exit' to quit")
 
 #strip mod ids
 all_mods = getModIDs(modlist)
 #***DEBUG all_mods = getModIDs('example.html')
 
-print(f'Array is {all_mods}')
+#***DEBUG print(f'Array is {all_mods}')
 
 forrmatted_mods = formatModIDs(all_mods)
 
