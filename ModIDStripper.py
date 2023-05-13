@@ -113,9 +113,15 @@ while(True):
     #exit loop if file is good
     if isModlist:
         break
+
+    #check if exit is typed
+    if modlist.lower() == "exit":
+        #if so, quit program
+        sys.exit(0)
     
     #if we get here, inform the user the files was not good
     print("File name incorrect. Please check spelling and ensure you put the .html!")
+    print("Type 'exit' to quit")
 
 #strip mod ids
 all_mods = getModIDs(modlist)
