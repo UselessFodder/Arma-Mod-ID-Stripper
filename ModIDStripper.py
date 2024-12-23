@@ -21,16 +21,24 @@ def open_file():
     is_acceptable = checkFile(file_path)
     
     if is_acceptable:
+        #get all mod IDs stripped from link
         mods = getModIDs(file_path)
         
         global mod_IDs
         mod_IDs = formatModIDs(mods)
         
+        #get all mod names from "DisplayName" line
+        mods = getModNames(file_path)
+        
+        global mod_Names
+        mod_Names = formatModNames(mods)
+        
         #update label
-        update_results(mod_IDs)
+        update_results(mod_IDs,mod_Names)
         
         #enable copy button
-        execute_button["state"] = "normal"
+        copy_ids_button["state"] = "normal"
+        copy_names_button["state"] = "normal"
     else:
         messagebox.showerror("Error", "Mod List cannot be read.\n"
             +"Please confirm this is a correct mod list file.")
@@ -121,15 +129,74 @@ def formatModIDs(all_mods):
     #return completed string
     return formatted_mods
 
-def update_results(new_text):
+def getModNames(fileLoc):
+    """
+        Function that takes in a previously verified Arma 3 modlist and outputs
+            an array of Steam mod names to be formatted into a startup param list
+        Parameters: html file name[str]
+        Return: mod names [array]
+    """
+    #define return array
+    mod_names = []
+    
+    #define text we will look for
+    key_Text = "DisplayName"
+    
+    #open file and create new reader
+    with open(fileLoc,'r') as file:
+        #read all lines
+        all_lines = file.readlines()
+    
+    #loop to scan through all lines
+    for x in all_lines:
+        #check if the start of a mod ID is in this line
+        if key_Text in x:
+            #get start of id
+            name_start = x.find('DisplayName')
+            #get end of id
+            name_end = x.find('<',name_start)
+            #get mod name which starts at +4 after DisplayName
+            new_mod = x[name_start + 13:name_end]
+            #store in array to return
+            mod_names.append(new_mod)
+        
+    #send finished array out
+    return mod_names
+
+def formatModNames(all_mods):
+    """
+        Function that takes in a previously stripped set of mod ids and outputs
+            them in the correct format for an arma 3 server start parameter line
+        Parameters: array of mod id's from getModIDs
+        Return: string with all mod ids correctly formatted
+    """
+    #define final return array
+    formatted_mods = ""
+    
+    #loop through all mods
+    for x in all_mods:
+        #attach proper format around entry
+        formatted_mods = formatted_mods + "@" + x + ";"
+    
+    #return completed string
+    return formatted_mods
+
+def update_results(mod_IDs,mod_Names):
+    new_text = mod_IDs + "\r\r\r" + mod_Names
     result_label.config(text=new_text)
 
-def copy_text(*args):
+def copy_text(copy_target):
     if mod_IDs != "":
-        root.clipboard_clear()
-        root.clipboard_append(mod_IDs)
+        if copy_target == "IDs":
+            root.clipboard_clear()
+            root.clipboard_append(mod_IDs)
         
-        messagebox.showinfo("Copy Successful","Mod IDs successfully copied to clipboard")
+            messagebox.showinfo("Copy Successful","Mod IDs successfully copied to clipboard")
+        elif copy_target == "Names":
+            root.clipboard_clear()
+            root.clipboard_append(mod_Names)
+        
+            messagebox.showinfo("Copy Successful","Mod Names successfully copied to clipboard")
         #new_result = mod_IDs + "\n\n Mod IDs copied to the clipboard!"
         
         #result_label.config(text = new_result)
@@ -160,7 +227,7 @@ result_label = tk.Label(root_frame,
                         padx=10,
                         pady=10)
 #result_label.pack(pady=5)
-result_label.grid(row=0,column=0, rowspan=3, padx=5, pady=5)
+result_label.grid(row=0,column=0, rowspan=4, padx=5, pady=5)
 result_label.bind('<Button-1>', copy_text)
 
 #define frame for buttons
@@ -171,11 +238,13 @@ button_frame.grid(row=0,column=1,padx=5)
 open_button = tk.Button(button_frame, text="Open File", width = 20, command=open_file)
 open_button.grid(row=0, column=0, pady=5)
 #open_button.pack(pady=5)
-execute_button = tk.Button(button_frame, text="Copy IDs", width = 20, command=copy_text, state="disabled")
-execute_button.grid(row=1, column=0, pady=5)
+copy_ids_button = tk.Button(button_frame, text="Copy IDs", width = 20, command= lambda: copy_text("IDs"), state="disabled")
+copy_ids_button.grid(row=1, column=0, pady=5)
+copy_names_button = tk.Button(button_frame, text="Copy Names", width = 20, command= lambda: copy_text("Names"), state="disabled")
+copy_names_button.grid(row=2, column=0, pady=5)
 
 close_button = tk.Button(button_frame, text="Close", width = 20, command=root.destroy)
-close_button.grid(row=2, column=0, pady=5)
+close_button.grid(row=3, column=0, pady=5)
 
 #push buttons up
 button_push_frame1 = tk.Frame(root_frame, width=50, height=100)
